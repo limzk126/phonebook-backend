@@ -32,6 +32,13 @@ app.get("/", (request, response) => {
   response.send("<h1>The server is running.</h1>");
 });
 
+app.get("/info", (request, response) => {
+  const text = `<p>Phonebook has info for ${
+    persons.length
+  } people</p><p>${new Date().toString()}</p>`;
+  response.send(text);
+});
+
 app.get("/api/persons/:id?", (request, response) => {
   const id = Number(request.params.id);
   if (id) {
@@ -58,11 +65,33 @@ app.delete("/api/persons/:id", (request, response) => {
   response.send(`Person with id ${request.params.id} does not exist!`);
 });
 
-app.get("/info", (request, response) => {
-  const text = `<p>Phonebook has info for ${
-    persons.length
-  } people</p><p>${new Date().toString()}</p>`;
-  response.send(text);
+const generateId = () => {
+  return Math.floor(Math.random() * Number.MAX_VALUE);
+};
+
+app.post("/api/persons", (request, response) => {
+  const body = request.body;
+  if (!body.name) {
+    return response.status(400).json({
+      error: "name missing",
+    });
+  }
+
+  if (!body.number) {
+    return response.status(400).json({
+      error: "number missing",
+    });
+  }
+
+  const newPerson = {
+    id: generateId(),
+    name: body.name,
+    number: body.number,
+  };
+
+  persons = persons.concat(newPerson);
+
+  response.send(`Successfully added ${newPerson.name}`);
 });
 
 const PORT = 3001;
