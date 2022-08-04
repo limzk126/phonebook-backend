@@ -25,11 +25,18 @@ let notes = [
 ];
 
 app.get("/", (request, response) => {
-    response.send('<h1>The server is running.</h1>');
-})
+  response.send("<h1>The server is running.</h1>");
+});
 
 app.get("/api/notes", (request, response) => {
   response.json(notes);
+});
+
+app.get("/info", (request, response) => {
+  const text = `<p>Phonebook has info for ${
+    notes.length
+  } people</p><p>${new Date().toString()}</p>`;
+  response.send(text);
 });
 
 const PORT = 3001;
