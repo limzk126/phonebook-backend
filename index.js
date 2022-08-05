@@ -6,6 +6,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(express.static('build'));
 
 morgan.token("body", (req)  => JSON.stringify(req.body));
 app.use(
@@ -57,6 +58,7 @@ app.get("/api/persons/:id?", (request, response) => {
     return response.send(`Person with id ${id} does not exists!`);
   }
 
+  console.log("persons ...", persons);
   response.json(persons);
 });
 
@@ -108,8 +110,10 @@ app.post("/api/persons", (request, response) => {
 
   persons = persons.concat(newPerson);
 
-  response.send(`Successfully added ${newPerson.name}`);
+  response.send(newPerson);
 });
 
-const PORT = 3001;
-app.listen(PORT);
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
