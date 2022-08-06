@@ -1,14 +1,16 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const Person = require("./models/person");
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static('build'));
+app.use(express.static("build"));
 
-morgan.token("body", (req)  => JSON.stringify(req.body));
+morgan.token("body", (req) => JSON.stringify(req.body));
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
@@ -58,8 +60,10 @@ app.get("/api/persons/:id?", (request, response) => {
     return response.send(`Person with id ${id} does not exists!`);
   }
 
-  console.log("persons ...", persons);
-  response.json(persons);
+  Person.find({}).then((people) => {
+    console.log("sadasd", people);
+    response.json(people);
+  });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
@@ -102,18 +106,18 @@ app.post("/api/persons", (request, response) => {
     });
   }
 
-  const newPerson = {
-    id: generateId(),
+  const newPerson = new Person({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  persons = persons.concat(newPerson);
-
-  response.send(newPerson);
+  newPerson.save().then((result) => {
+    console.log("POST RES", result);
+    response.send(result);
+  });
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
