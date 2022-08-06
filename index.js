@@ -15,28 +15,7 @@ app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms :body")
 );
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
+let persons = [];
 
 app.get("/", (request, response) => {
   response.send("<h1>The server is running.</h1>");
@@ -61,21 +40,17 @@ app.get("/api/persons/:id?", (request, response) => {
   }
 
   Person.find({}).then((people) => {
-    console.log("sadasd", people);
     response.json(people);
   });
 });
 
 app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-
-  const person = persons.find((person) => person.id === id);
-  if (person) {
-    persons = persons.filter((person) => person.id !== id);
-    return response.send(`${person.name} has been deleted.`);
-  }
-
-  response.send(`Person with id ${request.params.id} does not exist!`);
+  const id = request.params.id;
+  Person.findByIdAndDelete(id)
+    .then((res) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
 const generateId = () => {
