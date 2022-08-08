@@ -22,42 +22,48 @@ app.get("/", (request, response) => {
 });
 
 app.get("/info", (request, response) => {
-  const text = `<p>Phonebook has info for ${
-    persons.length
-  } people</p><p>${new Date().toString()}</p>`;
-  response.send(text);
-});
-
-app.get("/api/persons/:id?", (request, response) => {
-  const id = Number(request.params.id);
-  if (id) {
-    const person = persons.find((person) => person.id === id);
-    if (person) {
-      return response.json(person);
-    }
-
-    return response.send(`Person with id ${id} does not exists!`);
-  }
-
   Person.find({}).then((people) => {
-    response.json(people);
+    const text = `<p>Phonebook has info for ${
+      people.length
+    } people</p><p>${new Date().toString()}</p>`;
+    response.send(text);
   });
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id?", (request, response, next) => {
+  const id = request.params.id;
+  if (id) {
+    return Person.findById(id)
+      .then((person) => response.json(person))
+      .catch(next);
+  }
+
+  Person.find({})
+    .then((people) => {
+      response.json(people);
+    })
+    .catch(next);
+});
+
+app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
   Person.findByIdAndDelete(id)
     .then((res) => {
       response.status(204).end();
     })
-    .catch((error) => next(error));
+    .catch(next);
 });
 
-const generateId = () => {
-  return Math.floor(Math.random() * Number.MAX_VALUE);
-};
+app.put("/api/persons/:id", (request, response, next) => {
+  const id = request.params.id;
+  Person.findByIdAndUpdate(id, request.body, { new: true })
+    .then((updatedNote) => {
+      response.json(updatedNote);
+    })
+    .catch(next);
+});
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
   if (!body.name) {
     return response.status(400).json({
@@ -86,13 +92,26 @@ app.post("/api/persons", (request, response) => {
     number: body.number,
   });
 
-  newPerson.save().then((result) => {
-    console.log("POST RES", result);
-    response.send(result);
-  });
+  newPerson
+    .save()
+    .then((result) => {
+      response.send(result);
+    })
+    .catch(next);
 });
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const errorHandler = (error, request, response, next) => {
+  console.log("Custom err handler called ...");
+  if (error.name === "CastError") {
+    return response.status(404).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
+app.use(errorHandler);
