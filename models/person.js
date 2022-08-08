@@ -9,9 +9,24 @@ mongoose
   .then((result) => console.log(`connected to MongoDB`))
   .catch((err) => console.log("error connecting to MongoDB", err.message));
 
+const customNumberValidator = {
+  validator: function (v) {
+    return /\d{2,3}-\d+/.test(v);
+  },
+  msg: "Number must have 2 or 3 digits followed by a hyphen and more digits.",
+};
 const personSchema = mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    minLength: 3,
+    required: true,
+  },
+  number: {
+    type: String,
+    validate: customNumberValidator,
+    minLength: 8,
+    required: true,
+  },
 });
 
 personSchema.set("toJSON", {

@@ -56,7 +56,11 @@ app.delete("/api/persons/:id", (request, response, next) => {
 
 app.put("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  Person.findByIdAndUpdate(id, request.body, { new: true })
+  Person.findByIdAndUpdate(id, request.body, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((updatedNote) => {
       response.json(updatedNote);
     })
@@ -106,9 +110,13 @@ app.listen(PORT, () => {
 });
 
 const errorHandler = (error, request, response, next) => {
-  console.log("Custom err handler called ...");
+  console.log("Custom err handler called ...", error);
+
   if (error.name === "CastError") {
     return response.status(404).send({ error: "malformatted id" });
+  }
+  if (error.name === "ValidationError") {
+    return response.status(400).json({ error: error.message });
   }
 
   next(error);
