@@ -1,27 +1,25 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-const Person = require("./models/person");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
+const Person = require('./models/person');
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
-app.use(express.static("build"));
+app.use(express.static('build'));
 
-morgan.token("body", (req) => JSON.stringify(req.body));
+morgan.token('body', (req) => JSON.stringify(req.body));
 app.use(
-  morgan(":method :url :status :res[content-length] - :response-time ms :body")
+  morgan(':method :url :status :res[content-length] - :response-time ms :body'),
 );
 
-let persons = [];
-
-app.get("/", (request, response) => {
-  response.send("<h1>The server is running.</h1>");
+app.get('/', (request, response) => {
+  response.send('<h1>The server is running.</h1>');
 });
 
-app.get("/info", (request, response) => {
+app.get('/info', (request, response) => {
   Person.find({}).then((people) => {
     const text = `<p>Phonebook has info for ${
       people.length
@@ -30,36 +28,36 @@ app.get("/info", (request, response) => {
   });
 });
 
-app.get("/api/persons/:id?", (request, response, next) => {
-  const id = request.params.id;
+app.get('/api/persons/:id?', (request, response, next) => {
+  const { id } = request.params;
   if (id) {
     return Person.findById(id)
       .then((person) => response.json(person))
       .catch(next);
   }
 
-  Person.find({})
+  return Person.find({})
     .then((people) => {
       response.json(people);
     })
     .catch(next);
 });
 
-app.delete("/api/persons/:id", (request, response, next) => {
-  const id = request.params.id;
+app.delete('/api/persons/:id', (request, response, next) => {
+  const { id } = request.params;
   Person.findByIdAndDelete(id)
-    .then((res) => {
+    .then(() => {
       response.status(204).end();
     })
     .catch(next);
 });
 
-app.put("/api/persons/:id", (request, response, next) => {
-  const id = request.params.id;
+app.put('/api/persons/:id', (request, response, next) => {
+  const { id } = request.params;
   Person.findByIdAndUpdate(id, request.body, {
     new: true,
     runValidators: true,
-    context: "query",
+    context: 'query',
   })
     .then((updatedNote) => {
       response.json(updatedNote);
@@ -67,27 +65,25 @@ app.put("/api/persons/:id", (request, response, next) => {
     .catch(next);
 });
 
-app.post("/api/persons", (request, response, next) => {
-  const body = request.body;
+app.post('/api/persons', (request, response, next) => {
+  const { body } = request;
   if (!body.name) {
     return response.status(400).json({
-      error: "name missing",
+      error: 'name missing',
     });
   }
 
   if (!body.number) {
     return response.status(400).json({
-      error: "number missing",
+      error: 'number missing',
     });
   }
 
   if (
-    persons.find(
-      (person) => person.name.toLowerCase() === body.name.toLowerCase()
-    )
+    Person.find({ name: { $regex: new RegExp(body.name.toLowerCase(), 'i') } })
   ) {
     return response.status(400).json({
-      error: "name must be unique",
+      error: 'name must be unique',
     });
   }
 
@@ -96,7 +92,7 @@ app.post("/api/persons", (request, response, next) => {
     number: body.number,
   });
 
-  newPerson
+  return newPerson
     .save()
     .then((result) => {
       response.send(result);
@@ -110,16 +106,16 @@ app.listen(PORT, () => {
 });
 
 const errorHandler = (error, request, response, next) => {
-  console.log("Custom err handler called ...", error);
+  console.log('Custom err handler called ...', error);
 
-  if (error.name === "CastError") {
-    return response.status(404).send({ error: "malformatted id" });
+  if (error.name === 'CastError') {
+    return response.status(404).send({ error: 'malformatted id' });
   }
-  if (error.name === "ValidationError") {
+  if (error.name === 'ValidationError') {
     return response.status(400).json({ error: error.message });
   }
 
-  next(error);
+  return next(error);
 };
 
 app.use(errorHandler);

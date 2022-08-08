@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 if (process.argv.length < 3) {
   process.exit(1);
@@ -15,7 +15,7 @@ const personSchema = new mongoose.Schema({
   number: Number,
 });
 
-const Person = mongoose.model("Person", personSchema);
+const Person = mongoose.model('Person', personSchema);
 
 const newName = process.argv[3];
 const newNumber = process.argv[4];
@@ -33,7 +33,7 @@ const addPerson = () => {
 };
 
 const getPeople = () => {
-  console.log("Phonebook:");
+  console.log('Phonebook:');
   return Person.find({}).then((result) => {
     result.forEach((person) => console.log(`${person.name} ${person.number}`));
     mongoose.connection.close();
